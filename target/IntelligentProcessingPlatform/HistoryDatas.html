@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./layui/css/layui.css">
+</head>
+<body>
+<script src="./layui/layui.js"></script>
+<script src="./js/jquery.js"></script>
+<table class="layui-hide" id="HisTab" lay-filter="HisEvent"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">字典</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="databackup">备份</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+
+    layui.use('table', function () {
+        var table = layui.table;
+
+        table.render({
+            elem: '#HisTab'
+            , url: 'servlet?method=HistoryTab'
+            , cellMinWidth: 100 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+            , cols: [[
+                {field: 'showid', title: '序号' ,align: 'center'}
+                , {field: 'dataname', minWidth:300, title: '数据集名称',event: 'showAllData'}
+                , {field: 'time', width: 200, title: '上传时间', sort: true}
+                , {field: 'state', width: 200, title: '状态', sort: true}
+                , {field: 'beizhu', width: 200, title: '备注', event:'changebeizhu'}
+                , {fixed: 'right', title:"操作", width:240, align:'center', toolbar: '#barDemo'}
+
+            ]]
+
+        });
+        layui.use('table', function(){
+            var table = layui.table;
+            //监听单元格事件
+            table.on('tool(HisEvent)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'changebeizhu'){
+                    layer.prompt({
+                        formType: 2
+                        ,title: '将此数据集的备注修改为:'
+                        ,value: data.beizhu
+                    }, function(value, index){
+                        layer.close(index);
+                        //这里一般是发送修改的Ajax请求
+                        ChangeBeizhu(data.id,value);
+                        //同步更新表格和缓存对应的值
+                        obj.update({
+                            beizhu: value
+                        });
+                    });
+                } else if(obj.event === 'del'){
+                    if(data.state=="正在上传"){
+                        layer.alert("文件正在上传，稍后再操作")
+                    }
+                    else {
+                        layer.confirm('确定删除这个数据集吗？', function (index) {
+                            DeleteOneHistory(data.id, data.dataname);
+                            obj.del();
+                            layer.close(index);
+                        });
+                    }
+                }
+                else if(obj.event === 'showAllData'){
+                    getDataClSize(data.id);
+                }
+                else if(obj.event === 'detail'){
+                    ShowDictionary(data.id,data.dataname);
+                }
+                else if(obj.event === 'databackup'){
+                    layer.confirm('备份这个数据集？', function (index) {
+                        DataBackUp(data.id,data.dataname,data.time)
+                        obj.del();
+                        layer.close(index);
+                    });
+                }
+            });
+        });
+
+    });
+
+</script>
+<script>
+    function DataBackUp(ID,DataName,Time){
+        var url = "servlet?method=DataBackUp&TabID="+ID+"&DataName="+DataName+"&Time="+Time;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+
+            },
+            error: function(){
+                alert("error");
+            }
+        });
+    }
+    function ChangeBeizhu(ID,value){
+        var url = "servlet?method=ChangeDataBeizhu&TabID="+ID+"&value="+value;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+
+            },
+            error: function(){
+                alert("error");
+            }
+        });
+    }
+    function DeleteOneHistory(ID,tabname){
+        var url = "servlet?method=DeleteOneHistory&tabid="+ID+"&tabname="+tabname;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+
+            },
+            error: function(){
+                alert("error");
+            }
+        });
+    }
+    function getDataClSize(ID,tabname){
+        var url = "servlet?method=getDataClSize&TabID=" + ID;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+                ShowData(ID,tabname,result)
+            },
+            error: function(){
+                alert("错误");
+            }
+        });
+    }
+    function ShowData(ID,tabname,size){
+        layer.open({
+            type: 2,
+            area: ['1000px', '600px'],
+            title: name,
+            fixed: false, //不固定
+            maxmin: true,
+            content: 'ShowThisData.html?ID='+ID+'&tabname='+tabname+"&size="+size,
+            success: function (layero, index) {
+
+            }
+        });
+    }
+    function ShowDictionary(id,name){
+        layer.open({
+            type: 2,
+            area: ['1000px', '600px'],
+            title: name,
+            fixed: false,
+            maxmin: true,
+            content: 'PopDictionary.html?ID='+id+'&tabname='+name,
+            success: function (layero, index) {
+
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

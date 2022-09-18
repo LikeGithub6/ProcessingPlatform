@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+</head>
+<body>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.js"></script>
+<table class="layui-hide" id="test" lay-filter="demoEvent"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="databackup">加入数据集</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+        table.render({
+            elem: '#test'
+            , url: 'servlet?method=showDataBackUp'
+            , cellMinWidth: 100 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+            , cols: [[
+                {field: 'showid', title: '序号' ,align: 'center'}
+                , {field: 'dataname', minWidth:300, title: '数据集名称',event: 'showAllData'}
+                , {field: 'time', width: 200, title: '备份时间', sort: true}
+                , {field: 'state', width: 200, title: '状态', sort: true}
+                , {field: 'beizhu', width: 200, title: '备注', event:'changebeizhu'}
+                , {fixed: 'right', title:"操作", width:240, align:'center', toolbar: '#barDemo'}
+            ]]
+        });
+        layui.use('table', function(){
+            var table = layui.table;
+            //监听单元格事件
+            table.on('tool(demoEvent)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'changebeizhu'){
+                    layer.prompt({
+                        formType: 2
+                        ,title: '将此数据集的备注修改为:'
+                        ,value: data.beizhu
+                    }, function(value, index){
+                        layer.close(index);
+                        //这里一般是发送修改的Ajax请求
+                        ChangeBackUpBeizhu(data.id,value);
+                        //同步更新表格和缓存对应的值
+                        obj.update({
+                            beizhu: value
+                        });
+                    });
+                } else if(obj.event === 'del'){
+                        layer.confirm('确定删除这个数据集吗？', function (index) {
+                            DeleteOneBackUp(data.id, data.dataname);
+                            obj.del();
+                            layer.close(index);
+                        });
+
+                }
+                else if(obj.event === 'databackup'){
+                    DataBackUpToData(data.id,data.dataname,data.yuanid)
+                }
+            });
+        });
+
+    });
+</script>
+<script>
+    function DeleteOneBackUp(id,name){
+        var url = "servlet?method=DeleteOneBackUp&BFID="+id+"&BFDataName="+name
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function ChangeBackUpBeizhu(bfid,value){
+        var url = "servlet?method=ChangeBackUpBZ&BFID="+bfid+"&value="+value
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function DataBackUpToData(id,name,yuanid){
+        var url = "servlet?method=DataBackUpToData&BFID="+id+"&BFDataName="+name+"&yuanid="+yuanid
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+
+            },
+            error: function(){
+
+            }
+        });
+    }
+</script>
+</body>
+</html>

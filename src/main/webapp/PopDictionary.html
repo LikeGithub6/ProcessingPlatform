@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+</head>
+<body>
+<table class="layui-hide" id="test" lay-filter="demoEvent"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.js"></script>
+<script>
+
+        const paramsStr = window.location.search
+        const params = new URLSearchParams(paramsStr)
+        var ID=params.get('ID')
+        var tabname=params.get('tabname')
+        layui.use('table', function () {
+            var table = layui.table;
+            table.render({
+                elem: '#test'
+                , url: 'servlet?method=showDictionary&tabid=' + ID + '&tabname=' + tabname
+                , cellMinWidth: 200 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                , cols: [[
+                    {field: 'showid', width: 100,title: '序号', align: 'center'}
+                    , {field: '字段名称', minWidth: 300, title: '字段名称'}
+                    , {field: '字段类型', width: 200, title: '字段类型'}
+                    , {field: '备注', width: 200, title: '备注', event: 'editbeizhu'}
+                    , {field: '字段长度', width: 200, title: '字段长度', sort: true, event: 'editchangdu'}
+                    , {field: '小数精度', width: 200, title: '小数精度', sort: true, event: 'editjingdu'}
+                    , {fixed: 'right', title: "操作", width: 120, align: 'center', toolbar: '#barDemo'}
+                ]]
+            });
+            layui.use('table', function () {
+                var table = layui.table;
+                //监听单元格事件
+                table.on('tool(demoEvent)', function (obj) {
+                    var data = obj.data;
+                    if (obj.event === 'editbeizhu') {
+                        layer.prompt({
+                            formType: 2
+                            , title: '将此字段的备注修改为:'
+                            , value: data.备注
+                        }, function (value, index) {
+                            layer.close(index);
+                            //这里一般是发送修改的Ajax请求
+                            EditOne("备注",data.字段名称,value)
+                            //同步更新表格和缓存对应的值
+                            obj.update({
+                                备注: value
+                            });
+                        });
+                    } else if (obj.event === 'editchangdu') {
+                        layer.prompt({
+                            formType: 2
+                            , title: '将此字段的长度修改为:'
+                            , value: data.字段长度
+                        }, function (value, index) {
+                            layer.close(index);
+                            //这里一般是发送修改的Ajax请求
+                            EditOne("字段名称",data.字段名称,value)
+                            //同步更新表格和缓存对应的值
+                            obj.update({
+                                字段长度: value
+                            });
+                        });
+                    }
+                    else if (obj.event === 'editjingdu') {
+                        layer.prompt({
+                            formType: 2
+                            , title: '将此字段的小数精度修改为:'
+                            , value: data.小数精度
+                        }, function (value, index) {
+                            layer.close(index);
+                            //这里一般是发送修改的Ajax请求
+                            EditOne("小数精度",data.字段名称,value)
+                            //同步更新表格和缓存对应的值
+                            obj.update({
+                                小数精度: value
+                            });
+                        });
+                    }
+                    else if(obj.event === 'del'){
+                        layer.confirm('确定删除这个字段吗？', function (index) {
+                            DeleteOneZiduan(data.字段名称,data.showid)
+                            obj.del();
+                            layer.close(index);
+                        });
+                    }
+                });
+            });
+
+        });
+    function EditOne(zd,name,value){
+        var url = "servlet?method=ChangeDictionaryOne&zd=" + zd+"&zdmc="+name+"&value="+value+"&tabid="+ID+"&tabname="+tabname
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+                ShowData(ID,tabname,result)
+            },
+            error: function(){
+                alert("错误");
+            }
+        });
+    }
+    function DeleteOneZiduan(name,showid){
+        var url = "servlet?method=DeleteOneZiDuan&zdmc="+name+"&tabid="+ID+"&tabname="+tabname+"&showid="+showid
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+                ShowData(ID,tabname,result)
+            },
+            error: function(){
+                alert("错误");
+            }
+        });
+    }
+</script>
+</body>
+</html>

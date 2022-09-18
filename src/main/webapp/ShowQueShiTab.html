@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+</head>
+<body>
+<table class="layui-hide" id="test" lay-filter="demoEvent"></table>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.js"></script>
+<script>
+  const paramsStr = window.location.search
+  const params = new URLSearchParams(paramsStr)
+  var ID=params.get('ID')
+  var tabname=params.get('tabname')
+  var size=params.get('size');
+  var cl=params.get('cl');
+  var CArr=[]
+  for(i=0;i<size;i++){
+    var data={};
+    data["field"]="cl"+i;
+    data["width"]=160;
+    data["title"]="cl"+i;
+    data["event"]="change"+i;
+    CArr.push(data)
+  }
+  layui.use('table', function () {
+    var table = layui.table;
+
+    table.render({
+      elem: '#test'
+      , url: 'servlet?method=showExcelQueShi&TabID='+ID+"&cl="+cl
+      , cellMinWidth: 200 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+      , cols: [CArr]
+      ,page:{
+          layout: [ 'prev', 'page', 'next', 'count','limit', 'refresh', 'skip']//自定义布局顺序
+            ,limit:15	//初始  每页几条数据
+            ,limits:[10,15,20,30]	//可以选择的 每页几条数据
+            ,groups:10 	//最多几个跳页按钮
+            ,first: false //不显示首页
+            ,last: false //不显示尾页
+      }
+  });
+      layui.use('table', function(){
+          var table = layui.table;
+          //监听单元格事件
+          table.on('tool(demoEvent)', function(obj){
+              var data = obj.data;
+              for(i1=0;i1<CArr.length;i1++) {
+
+                  if (obj.event === 'change'+i1) {
+                      ti="cl"+i1;
+                      layer.prompt({
+                          formType: 2
+                          , title: '修改信息'
+                          , value: data[ti]
+                      }, function (value, index) {
+                          layer.close(index);
+
+                          //这里一般是发送修改的Ajax请求
+                          ChangeOneQueShi(ID,tabname,data["cl0"],ti,value)
+                          //同步更新表格和缓存对应的值
+                          obj.update({
+
+                              [ti]: value
+                          });
+
+                      });
+                  }
+              }
+          });
+      });
+
+  });
+
+</script>
+<script>
+    function ChangeOneQueShi(ID,tabname,cl0,changecl,value){
+        var url = "servlet?method=ChangeOneQueShi&TabID=" + ID+"&DataName="+tabname+"&cl0="+cl0+"&changecl="+changecl+"&value="+value;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+
+            },
+            error: function(){
+                alert("错误");
+            }
+        });
+    }
+</script>
+</body>
+</html>

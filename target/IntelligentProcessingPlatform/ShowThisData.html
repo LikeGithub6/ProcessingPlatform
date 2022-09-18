@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+</head>
+<body>
+<table class="layui-hide" id="test" lay-filter="demoEvent"></table>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.js"></script>
+<script>
+    const paramsStr = window.location.search
+    const params = new URLSearchParams(paramsStr)
+    var ID=params.get('ID')
+    var tabname=params.get('tabname')
+    var size=params.get('size');
+    var CArr=[]
+    for(i=0;i<size;i++){
+        var data={};
+        data["field"]="cl"+i;
+        data["width"]=160;
+        data["title"]="cl"+i;
+        CArr.push(data)
+    }
+    layui.use('table', function () {
+        var table = layui.table;
+
+        table.render({
+            elem: '#test'
+            , url: 'servlet?method=showExcelData&TabID='+ID
+            , cellMinWidth: 200 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+            , cols: [CArr]
+            ,page:{
+                layout: [ 'prev', 'page', 'next', 'count','limit', 'refresh', 'skip']//自定义布局顺序
+                ,limit:15	//初始  每页几条数据
+                ,limits:[10,15,20,30]	//可以选择的 每页几条数据
+                ,groups:10 	//最多几个跳页按钮
+                ,first: false //不显示首页
+                ,last: false //不显示尾页
+            }
+        });
+
+    });
+
+</script>
+</body>
+</html>

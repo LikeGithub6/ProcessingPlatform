@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <style type="text/css">
+        .rdo {
+            width: 0px;
+            margin-right: 25px;/*选项之间的距离*/
+            position: relative;
+        }
+        .rdo:before,.rdo:after {
+            content: '';
+            position: absolute;
+            border-radius: 50%; /*圆角*/
+            transition: .4s ease; /*中点跳转的速度*/
+        }
+        .rdo:before {/*所有选项*/
+            width: 18px;
+            height: 18px; /*外圆的大小*/
+            background-color: #fff; /*圆环的颜色*/
+            border: 1px solid deepskyblue;/*外圆的边框*/
+        }
+        .rdo:after {/*未选中的中点*/
+            top: 6px;
+            left: 6px;
+            width: 8px;
+            height: 8px;
+            background-color: #fff; /*未选的中点的颜色*/
+        }
+        .rdo:checked:after {/*选中的中点*/
+            top: 4px;
+            left: 4px;
+            width: 12px;
+            height: 12px;
+            background-color:deepskyblue; /*选中的中点*/
+        }
+        .rdo:checked:before {
+            border-color:deepskyblue; /*选中的外圆边框*/
+        }
+        .rdo-text{
+            font-size: 15px;
+            position: relative;
+            top: 3px;
+            left: -6px;
+        }
+    </style>
+</head>
+<body>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.js"></script>
+<table class="layui-hide" id="HisTab" lay-filter="HisEvent"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="quchong">去重</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="queshi">显示缺失值</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="quwuyiyi">去除无意义数据</a>
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="datapinjie">数据拼接</a>
+</script>
+<script>
+
+    layui.use('table', function () {
+        var table = layui.table;
+
+        table.render({
+            elem: '#HisTab'
+            , url: 'servlet?method=DataCleanTab'
+            , cellMinWidth: 100 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+            , cols: [[
+                {field: 'showid', width:100,title: '序号' ,align: 'center'}
+                , {field: 'dataname',  title: '数据集名称',event: 'showAllData'}
+                , {field: 'beizhu', width: 200, title: '备注',event:'changebeizhu'}
+                , {fixed: 'right', title:"操作", width:600, align:'center', toolbar: '#barDemo'}
+
+            ]]
+
+        });
+        layui.use('table', function(){
+            var table = layui.table;
+            //监听单元格事件
+            table.on('tool(HisEvent)', function(obj){
+                var data = obj.data;
+                if(obj.event === 'quchong'){
+                    BaseIDGetCl(data.id,data.dataname)
+                }
+                else if(obj.event === 'showAllData'){
+                    getDataClSize(data.id);
+                }
+                else if(obj.event === 'detail'){
+                    ShowDictionary(data.id,data.dataname);
+                }
+                else if(obj.event === 'queshi'){
+                    BaseIDGetCl1(data.id,data.dataname)
+                }
+                else if(obj.event === 'quwuyiyi'){
+                    BaseIDGetCl2(data.id,data.dataname)
+                }
+                else if(obj.event === 'datapinjie'){
+                    BaseIDGetCl3(data.id,data.dataname)
+                }
+            });
+        });
+
+    });
+
+</script>
+<script>
+    function BaseIDGetCl(Tabid,Name){
+        var url = "servlet?method=BaseIDGetCl&TabID=" + Tabid+"&DataName="+Name;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+                ClToCheck(Tabid,Name,result)
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function BaseIDGetCl1(Tabid,Name){
+        var url = "servlet?method=BaseIDGetCl&TabID=" + Tabid+"&DataName="+Name;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+                ClToCheck1(Tabid,Name,result)
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function BaseIDGetCl2(Tabid,Name){
+        var url = "servlet?method=BaseIDGetCl&TabID=" + Tabid+"&DataName="+Name;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+                ClToCheck2(Tabid,Name,result)
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function BaseIDGetCl3(Tabid,Name){
+        var url = "servlet?method=BaseIDGetCl&TabID=" + Tabid+"&DataName="+Name;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+                ClToCheck3(Tabid,Name,result)
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function ClToCheck(Tabid,Name,result){
+        var htmlstr="";
+        for(i=0;i<result.length;i++){
+            htmlstr=htmlstr+"<p><input type='radio' id='clname' name='clname' class='rdo' value='"+result[i].id+"'>"+"<label class='rdo-text'>"+result[i].name+"</label>"+"</p>";
+        }
+        htmlstr=htmlstr+""
+        layer.open({
+            type: 1,
+            btn: ['确定'],
+            title:'选择去重哪一列',
+            area: ['600px', '300px'],
+            content: htmlstr,
+            yes: function(index, layero){
+                item = $('input[name=clname]:checked').val();
+                Removeduplicate(Tabid,Name,item)
+                layer.closeAll()
+            }
+
+        })
+    }
+    function ClToCheck1(Tabid,Name,result){
+        var htmlstr="";
+        for(i=0;i<result.length;i++){
+            htmlstr=htmlstr+"<p><input type='radio' id='clname' name='clname' class='rdo' value='"+result[i].id+"'>"+"<label class='rdo-text'>"+result[i].name+"</label>"+"</p>";
+        }
+        htmlstr=htmlstr+""
+        layer.open({
+            type: 1,
+            btn: ['确定'],
+            title:'选择查找哪一列缺失值',
+            area: ['600px', '300px'],
+            content: htmlstr,
+            yes: function(index, layero){
+                item = $('input[name=clname]:checked').val();
+                layer.closeAll()
+                layer.open({
+                    type: 2,
+                    area: ['1000px', '600px'],
+                    title: name,
+                    fixed: false, //不固定
+                    maxmin: true,
+                    content: 'ShowQueShiTab.html?ID='+Tabid+'&tabname='+Name+"&size="+result.length+"&cl="+item,
+                    success: function (layero, index) {
+
+                    }
+                });
+
+
+            }
+
+        })
+    }
+    function ClToCheck2(Tabid,Name,result){
+        var htmlstr="";
+        for(i=0;i<result.length;i++){
+            htmlstr=htmlstr+"<p><input type='radio' id='clname' name='clname' class='rdo' value='"+result[i].id+"'>"+"<label class='rdo-text'>"+result[i].name+"</label>"+"</p>";
+        }
+        htmlstr=htmlstr+""
+        layer.open({
+            type: 1,
+            btn: ['确定'],
+            title:'选择去除哪一列无意义的值',
+            area: ['600px', '300px'],
+            content: htmlstr,
+            yes: function(index, layero){
+                item = $('input[name=clname]:checked').val();
+                layer.prompt({
+                    formType: 2
+                    ,title: '输入删除多少以下的数据:'
+                }, function(value, index){
+                    layer.closeAll()
+                    //这里一般是发送修改的Ajax请求
+                    DelNoMeaing(Tabid,Name,item,value)
+                    //同步更新表格和缓存对应的值
+
+                });
+
+            }
+
+        })
+    }
+    function ClToCheck3(Tabid,Name,result){
+        var htmlstr="";
+        for(i=0;i<result.length;i++){
+            htmlstr=htmlstr+"<p><input type='radio' id='clname' name='clname' class='rdo' value='"+result[i].id+"'>"+"<label class='rdo-text'>"+result[i].name+"</label>"+"</p>";
+        }
+        htmlstr=htmlstr+""
+        layer.open({
+            type: 1,
+            btn: ['确定'],
+            title:'选择对那一列进行拼接',
+            area: ['600px', '300px'],
+            content: htmlstr,
+            yes: function(index, layero){
+                item = $('input[name=clname]:checked').val();
+                layer.open({
+                    type: 1,
+                    btn: ['确定'],
+                    title:'选择拼接第一列',
+                    area: ['600px', '300px'],
+                    content: htmlstr,
+                    yes: function(index, layero){
+                        item1 = $('input[name=clname]:checked').val();
+                        layer.open({
+                            type: 1,
+                            btn: ['确定'],
+                            title:'选择拼接第二列',
+                            area: ['600px', '300px'],
+                            content: htmlstr,
+                            yes: function(index, layero){
+                                item2 = $('input[name=clname]:checked').val();
+                                PinJie(Tabid,Name,item,item1,item2)
+                                layer.closeAll()
+                            }
+
+                        })
+
+                    }
+
+                })
+
+
+            }
+
+        })
+    }
+    function Removeduplicate(Tabid,Name,cl){
+        var url = "servlet?method=Removeduplicate&TabID=" + Tabid+"&DataName="+Name+"&cl="+cl;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "json",
+            success: function(result){
+
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function PinJie(Tabid,Name,cl1,cl2,cl3){
+        var url = "servlet?method=PinJie&TabID=" + Tabid+"&DataName="+Name+"&cl1="+cl1+"&cl2="+cl2+"&cl3="+cl3;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+
+            },
+            error: function(){
+
+            }
+        });
+    }
+    function DelNoMeaing(Tabid,Name,cl,value){
+        var url = "servlet?method=DelNoMeaing&TabID=" + Tabid+"&DataName="+Name+"&cl="+cl+"&value="+value;
+        $.ajax({
+            type: "get",
+            url: url,
+            data:[],
+            dataType: "text",
+            success: function(result){
+                layer.msg("删除数据共"+result+"条")
+            },
+            error: function(){
+
+            }
+        });
+    }
+</script>
+</body>
+</html>
